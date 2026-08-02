@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import sys
 import uuid
 
@@ -96,13 +97,32 @@ tab_b = html.Div([
 ])
 
 
+_SLIDER_LABEL_STYLE = {"fontSize": "0.9em", "whiteSpace": "nowrap"}
+_SLIDER_VALUE_STYLE = {"fontWeight": "bold", "color": "#3B1E8C",
+                       "marginLeft": "4px"}
+
+
+def _slider_block(label: str, id_: str, lo: float, hi: float, value: float,
+                  step: float | None = None):
+    """ラベル内に現在値を出すスライダ。
+
+    ツールチップ(always_visible)は下の要素に隠れて読めなくなるため使わない。
+    単位は値側に付けるので、ラベル末尾の "[m]" 等は落とす。
+    """
+    name = re.sub(r"\s*\[[^\]]*\]\s*$", "", label)
+    return html.Div([
+        html.Label([name, html.Span(id=f"{id_}-val",
+                                    style=_SLIDER_VALUE_STYLE)],
+                   style=_SLIDER_LABEL_STYLE),
+        dcc.Slider(lo, hi, step=step, value=value, id=id_, marks=None,
+                   tooltip={"placement": "top", "always_visible": False},
+                   updatemode="drag"),
+    ], style={"width": "220px"})
+
+
 def _slider(name: str, id_: str, value: float):
     spec = PARAM_SPECS[name]
-    return html.Div([
-        html.Label(spec["label"], style={"fontSize": "0.9em"}),
-        dcc.Slider(spec["lo"], spec["hi"], value=value, id=id_, marks=None,
-                   tooltip={"placement": "bottom", "always_visible": True}),
-    ], style={"width": "220px"})
+    return _slider_block(spec["label"], id_, spec["lo"], spec["hi"], value)
 
 
 tab_c = html.Div([
@@ -138,15 +158,9 @@ tab_c = html.Div([
         _slider("deploy", "c-deploy", RobotParams().deploy_time),
         _slider("amax", "c-amax", RobotParams().a_max),
         _slider("latency", "c-latency", SensorParams().latency),
-        html.Div([
-            html.Label("LSTM事前予測リード時間 [s]",
-                       style={"fontSize": "0.9em"}),
-            dcc.Slider(0.0, 0.3, value=0.0, id="c-lead", marks=None,
-                       tooltip={"placement": "bottom",
-                                "always_visible": True}),
-        ], style={"width": "220px"}),
+        _slider_block("LSTM事前予測リード時間 [s]", "c-lead", 0.0, 0.3, 0.0),
     ], style={"display": "flex", "gap": "18px", "flexWrap": "wrap",
-              "marginTop": "8px"}),
+              "marginTop": "8px", "marginBottom": "10px"}),
     html.Div(id="c-warn", style={"color": "#B00", "marginTop": "4px"}),
     dcc.Loading(dcc.Graph(id="c-heatmap"), type="cube"),
 ], )
@@ -276,6 +290,20 @@ def b_run(_n, throw_key, seed):
 
 
 # ---------------- ビューC ----------------
+@app.callback(
+    Output("c-mouth-val", "children"), Output("c-deploy-val", "children"),
+    Output("c-amax-val", "children"), Output("c-latency-val", "children"),
+    Output("c-lead-val", "children"),
+    Input("c-mouth", "value"), Input("c-deploy", "value"),
+    Input("c-amax", "value"), Input("c-latency", "value"),
+    Input("c-lead", "value"))
+def c_slider_labels(mouth, deploy, amax, lat, lead):
+    """スライダの現在値をラベルに出す (ツールチップは隠れて読めないため)。"""
+    return (f" {mouth*100:.0f} cm", f" {deploy*1000:.0f} ms",
+            f" {amax:.1f} m/s²", f" {lat*1000:.0f} ms",
+            f" {lead*1000:.0f} ms")
+
+
 @app.callback(Output("c-heatmap", "figure"), Output("c-warn", "children"),
               Input("c-run", "n_clicks"),
               State("c-x", "value"), State("c-y", "value"),
