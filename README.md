@@ -29,6 +29,8 @@ python scripts/smoke_stage2.py
 python scripts/smoke_stage3.py
 ```
 
+リポジトリ直下の `.claude-autocommit` は、Claude Code のセッション終了時に自動コミットするためのオプトイン目印（グローバルの Stop フックがこのファイルの有無で判断する）。不要なら削除すれば自動コミットは止まる。
+
 ## 技術選定の理由
 
 ### 物理: 自前実装（PyBulletではない）
