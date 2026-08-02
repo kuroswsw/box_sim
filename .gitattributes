@@ -1,0 +1,11 @@
+# リポジトリ内の行末は LF に統一する (Windows の作業ツリーでは自動変換される)
+* text=auto eol=lf
+
+# 実測データ CSV も LF
+*.csv text eol=lf
+
+# バイナリ
+*.onnx binary
+*.pt binary
+*.pth binary
+*.png binary
