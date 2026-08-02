@@ -103,11 +103,14 @@ _SLIDER_VALUE_STYLE = {"fontWeight": "bold", "color": "#3B1E8C",
 
 
 def _slider_block(label: str, id_: str, lo: float, hi: float, value: float,
-                  step: float | None = None):
+                  step: float):
     """ラベル内に現在値を出すスライダ。
 
-    ツールチップ(always_visible)は下の要素に隠れて読めなくなるため使わない。
-    単位は値側に付けるので、ラベル末尾の "[m]" 等は落とす。
+    - ツールチップは使わない。下に出すと隠れ、上に出すと隣のラベルに被るため。
+      現在値はラベル内の Span に出す。
+    - step は必須。Dash は step=None を「marks にしかスナップしない」と解釈し、
+      marks=None と組み合わせると両端しか選べなくなる。
+    - 単位は値側に付けるので、ラベル末尾の "[m]" 等は落とす。
     """
     name = re.sub(r"\s*\[[^\]]*\]\s*$", "", label)
     return html.Div([
@@ -115,14 +118,14 @@ def _slider_block(label: str, id_: str, lo: float, hi: float, value: float,
                                     style=_SLIDER_VALUE_STYLE)],
                    style=_SLIDER_LABEL_STYLE),
         dcc.Slider(lo, hi, step=step, value=value, id=id_, marks=None,
-                   tooltip={"placement": "top", "always_visible": False},
-                   updatemode="drag"),
+                   tooltip=None, updatemode="drag"),
     ], style={"width": "220px"})
 
 
 def _slider(name: str, id_: str, value: float):
     spec = PARAM_SPECS[name]
-    return _slider_block(spec["label"], id_, spec["lo"], spec["hi"], value)
+    return _slider_block(spec["label"], id_, spec["lo"], spec["hi"], value,
+                         spec["step"])
 
 
 tab_c = html.Div([
@@ -158,7 +161,8 @@ tab_c = html.Div([
         _slider("deploy", "c-deploy", RobotParams().deploy_time),
         _slider("amax", "c-amax", RobotParams().a_max),
         _slider("latency", "c-latency", SensorParams().latency),
-        _slider_block("LSTM事前予測リード時間 [s]", "c-lead", 0.0, 0.3, 0.0),
+        _slider_block("LSTM事前予測リード時間 [s]", "c-lead", 0.0, 0.3, 0.0,
+                      0.005),
     ], style={"display": "flex", "gap": "18px", "flexWrap": "wrap",
               "marginTop": "8px", "marginBottom": "10px"}),
     html.Div(id="c-warn", style={"color": "#B00", "marginTop": "4px"}),

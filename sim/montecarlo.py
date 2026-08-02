@@ -14,11 +14,13 @@ from .loop import run_batch
 from .params import (ControlParams, ObjectParams, RobotParams, SensorParams,
                      ThrowPreset, WorldParams)
 
+# step は GUI スライダの刻み幅。Dash では step=None にすると
+# 「marks の位置にしかスナップしない」ため、必ず明示すること。
 PARAM_SPECS = {
-    "mouth": dict(label="受け口展開径 [m]", lo=0.10, hi=0.40),
-    "deploy": dict(label="展開時間 [s]", lo=0.05, hi=0.40),
-    "amax": dict(label="最大加速度 [m/s²]", lo=0.5, hi=8.0),
-    "latency": dict(label="センサ遅延 [s]", lo=0.01, hi=0.25),
+    "mouth": dict(label="受け口展開径 [m]", lo=0.10, hi=0.40, step=0.01),
+    "deploy": dict(label="展開時間 [s]", lo=0.05, hi=0.40, step=0.01),
+    "amax": dict(label="最大加速度 [m/s²]", lo=0.5, hi=8.0, step=0.1),
+    "latency": dict(label="センサ遅延 [s]", lo=0.01, hi=0.25, step=0.005),
 }
 
 
